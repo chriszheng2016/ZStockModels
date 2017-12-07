@@ -18,6 +18,16 @@ init_stock_db.default <- function(stock_db) {
   "Unknow class"
 }
 
+# default function to transalte name to code
+name2code <- function(x, name, ...) {
+  "Unknow class"
+}
+
+# default function to transalte code to name
+code2name <- function(x, code, ...) {
+  "Unknow class"
+}
+
 # default function to list all datasets of stck_db
 list_stock_tables.default <- function(stock_db) {
   "Unknow class"

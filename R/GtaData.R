@@ -1,4 +1,19 @@
 
+# CONSTANT DEFINATION -----------------------------------------------------
+
+.PACKAGE_NAME <- "ZStockModels"
+
+# profile variable defination
+# Since R devtools dosen't suport loading Chinese charaters in script file, we
+# have to use reference name of varible in profile for refering Chinese table
+# name in DB
+.GTA_RPROFILE_DIR <- "etc"
+.GTA_PROFILE_FILE <- "gta_profile.csv"
+.GTA_TABLE_FIELDNAME_LIST <- "gta_fieldname_list"
+.GTA_TABLE_TRD_COMPANY <- "TRD_Co"
+.GTA_XXXX <- "中文字符"  # not supported
+
+
 # creator of gta_db
 gta_db <- function(dsn = "GTA_SQLData") {
 
@@ -40,14 +55,18 @@ init_stock_db.gta_db <- function(stock_db) {
 
   stopifnot(inherits(stock_db, "gta_db"))
 
+  # set up table name mapping for referece
+  gta_profile_name <- system.file(.GTA_RPROFILE_DIR, .GTA_PROFILE_FILE, package = .PACKAGE_NAME )
+
+  stock_db$table_fieldname_list <- .get_db_profile(gta_profile_name, .GTA_TABLE_FIELDNAME_LIST)
+  stock_db$table_trd_company    <- .get_db_profile(gta_profile_name, .GTA_TABLE_TRD_COMPANY)
 
   # set up field_name list
   stock_db$stock_field_list <- stock_field_list(stock_db)
 
-
   # set up stock_name list
-  #stock_db$stock_name_list <- stock_name_list(stock_db)
-  stock_db$stock_name_list <- NULL
+  stock_db$stock_name_list <- stock_name_list(stock_db)
+
 
 }
 
@@ -97,6 +116,35 @@ list_stock_tables.gta_db <- function(stock_db) {
   return(db_tables)
 }
 
+# translate name to code for field or stock
+name2code.gta_db <- function(stock_db, name, type=c("field", "stock")) {
+
+    stopifnot(inherits(stock_db, "gta_db"), !missing(name))
+
+    target_type <- match.arg(type)
+    code = switch(target_type,
+              field = name2code(stock_db$stock_field_list, name = name),
+              stock = name2code(stock_db$stock_name_list, name = name)
+    )
+
+    return(code)
+
+}
+
+# translate code to name for field or stock
+code2name.gta_db <- function(stock_db, code, type=c("field", "stock")) {
+
+  stopifnot(inherits(stock_db, "gta_db"), !missing(code))
+
+  target_type <- match.arg(type)
+  name = switch(target_type,
+                field = code2name(stock_db$stock_field_list, code = code),
+                stock = code2name(stock_db$stock_name_list, code = code)
+  )
+
+  return(name)
+}
+
 
 # get one dataset from stock_db
 get_table_dataset.gta_db <- function(stock_db, table_name, quietly = FALSE) {
@@ -113,7 +161,8 @@ get_table_dataset.gta_db <- function(stock_db, table_name, quietly = FALSE) {
   }
 
   # Fetech datasets from datatables
-  ds_result <- tryCatch(RODBC::sqlFetch(stock_db$connection, table_name),
+  ds_result <- tryCatch(RODBC::sqlFetch(stock_db$connection, table_name,
+                                        stringsAsFactors = FALSE),
                          error = function(e) e)
   if (inherits(ds_result, "error")) {
     msg <- conditionMessage(ds_result)
@@ -181,10 +230,12 @@ fetch_table_dataset.gta_db <- function(stock_db, table_list) {
 stock_field_list.gta_db <- function(stock_db) {
 
   stopifnot(!is.null(stock_db), inherits(stock_db, "gta_db"))
+  stopifnot(!is.null(stock_db$table_fieldname_list))
 
   # build field_name list
   field_name_list <- NULL
-  field_list.df <- read.csv("R/gta_fieldname.csv", stringsAsFactors = FALSE)
+  field_list.df <- get_table_dataset.gta_db(stock_db,
+                                            table_name = stock_db$table_fieldname_list)
   field_list <- field_list.df[, c(1, 2)]
   colnames(field_list) <- c("field_code", "field_name")
   field_list["field_code"] <- lapply(field_list["field_code"], tolower)
@@ -202,18 +253,18 @@ stock_field_list.gta_db <- function(stock_db) {
 stock_name_list.gta_db <- function(stock_db) {
 
   stopifnot(!is.null(stock_db), inherits(stock_db, "gta_db"))
+  stopifnot(!is.null(stock_db$table_trd_company))
 
   #build stock_name_list
   stock_name_list <- NULL
-
   ds_trd_company.df <- get_table_dataset.gta_db(stock_db,
-                                         table_name = I("TRD_Co_公司基本情况"))
+                                         table_name = stock_db$table_trd_company)
   if (!is.null(ds_trd_company.df)) {
-    stock_name_list <- ds_trd_company.df[,c("stockcd", "sktnme")]
+    stock_name_list <- ds_trd_company.df[,c("stkcd", "stknme")]
     names(stock_name_list) <- c("stock_code","stock_name")
     stock_name_list <- structure(stock_name_list, class = "stock_name_list")
   } else {
-    stop("can't gett data from stock db")
+    stop("can't get data from stock db")
   }
 
   return(stock_name_list)

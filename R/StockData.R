@@ -27,6 +27,16 @@ init_stock_db <- function(stock_db) {
   UseMethod("init_stock_db")
 }
 
+# transalte name to code in domain of stock db
+name2code <- function(stock_db) {
+  UseMethod("name2code")
+}
+
+# transalte code to name in domain of stock db
+code2name <- function(stock_db) {
+  UseMethod("code2name")
+}
+
 
 # List all datasets of stck_db
 list_stock_tables <- function(stock_db) {
@@ -148,10 +158,19 @@ fetch_stock_dataset <- function(ds_source.df, stock_cd_list, ...) {
   return(ds_result)
 }
 
+# S3 generic function to translate code to name
+code2name <- function(x, code, ...) {
+  UseMethod("code2name")
+}
+
+# S3 generic function to translate name to code
+name2code <- function(x, name, ...) {
+  UseMethod("name2code")
+}
 
 # stock_field class -------------------------------------------------------
 
-# stock_field class creator
+# S3 generic stock_field class creator
 stock_field_list <- function(stock_db) {
   UseMethod("stock_field_list")
 }
@@ -161,7 +180,8 @@ code2name.stock_field_list <- function(x, code) {
 
   stopifnot(inherits(x, "stock_field_list") ,!is.null(code))
 
-  name <- x$field_name[x$field_code == code]
+  match_index = match(code, x$field_code)
+  name <- x$field_name[match_index]
 
   return(name)
 
@@ -172,7 +192,8 @@ name2code.stock_field_list <- function(x, name) {
 
   stopifnot(inherits(x, "stock_field_list") ,!is.null(name), is.character(name))
 
-  code <- x$field_code[x$field_name == name]
+  match_index = match(name, x$field_name)
+  code <- x$field_code[match_index]
 
   return(code)
 
@@ -182,7 +203,7 @@ name2code.stock_field_list <- function(x, name) {
 # stock_name_list ---------------------------------------------------------
 
 
-# stock_name_list class creator
+# S3 generic stock_name_list class creator
 stock_name_list <- function(stock_db) {
   UseMethod("stock_name_list")
 }
@@ -192,7 +213,8 @@ code2name.stock_name_list <- function(x, code) {
 
   stopifnot(inherits(x, "stock_name_list") ,!is.null(code))
 
-  name <- x$stock_name[x$stock_code == code]
+  match_index = match(code, x$stock_code)
+  name <- x$stock_name[match_index]
 
   return(name)
 
@@ -203,21 +225,14 @@ name2code.stock_name_list <- function(x, name) {
 
   stopifnot(inherits(x, "stock_name_list") ,!is.null(name), is.character(name))
 
-  code <- x$stock_code[x$stock_name == name]
+  match_index = match(name, x$stock_name)
+  code <- x$stock_code[match_index]
 
   return(code)
 
 }
 
-# S3 generic function to translate code to name
-code2name <- function(x, code) {
-  UseMethod("code2name")
-}
 
-# S3 generic function to translate name to code
-name2code <- function(x, name) {
-  UseMethod("name2code")
-}
 
 
 

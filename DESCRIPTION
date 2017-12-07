@@ -1,0 +1,22 @@
+Package: ZStockModels
+Type: Package
+Title: ZStockModels - Stock factors Models for China Stock Market Investment
+Version: 0.0.0.9000
+Author: person("Chris", "Zheng", email = "chrisZheng@vip.sina.com.cn",
+                role = c("aut", "cre"))
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: An implementation of analystic tools of stock factors models for
+        investing China stock market.
+Depends: R (>= 3.4.2)
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+Imports: fPortfolio,
+    timeSeries,
+    xts,
+    RODBC
+Suggests: Hmisc,
+    knitr,
+    rmarkdown
+RoxygenNote: 6.0.1
+VignetteBuilder: knitr

@@ -35,16 +35,31 @@ stock_name_list <- stock_name_list(stock_db)
 # Explore dataset: ds_trd_mnth.df -----------------------------------------
 # ds_trd_mnth.df <- get("ds_TRD_Mnth_月个股回报率.df")
 ds_trd_mnth.df <- get_table_dataset(stock_db, table_name = "TRD_Mnth_月个股回报率")
+ds_trd_dalyr <- get_table_dataset(stock_db, table_name = "TRD_Dalyr_日个股回报率")
 
 # Test get_stock_data
-
 ds_stock_mretnd.fts <- get_stock_dataset(ds_source.df = ds_trd_mnth.df, stock_cd = 600066, target_field = "mretnd", date_field = "trdmnt")
+ds_stock_mretnd.fts <- get_stock_dataset(ds_source.df = ds_trd_mnth.df, stock_cd = 600066, target_field = "mretnd", date_field = "trdmnt")
+
 
 # Test fetch_stocks_data
 stock_cd_list <- c(600066,000550, 600031, 000157,000651, 000333)
 (stock_name_list <- code2name(stock_db, stock_cd_list, type = "stock"))
 (stock_cd_list   <- name2code(stock_db, stock_name_list, type = "stock"))
 ds_stocks_mretnd.fts <- fetch_stock_dataset(ds_source.df = ds_trd_mnth.df, stock_cd_list = stock_cd_list, target_field = "mretnd", date_field = "trdmnt")
+ds_stocks_mretnd.fts <- timeSeries::substituteNA(ds_stocks_mretnd.fts, type = "zero")
+
+# Plot data for return series
+old_par <- par(mfrow = c(3,2))
+
+# plots for stock_stock_mrewnd
+fBasics::cumulatedPlot(ds_stocks_mretnd.fts)
+fBasics::drawdownPlot(ds_stocks_mretnd.fts)
+
+par(old_par)
+
+
+
 
 # Explore dataset: ds_fr_t5_profitable.df -----------------------------------------
 #ds_fr_t5_profitable.df <- get("ds_FR_T5_盈利能力.df")

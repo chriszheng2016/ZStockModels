@@ -1,7 +1,37 @@
 
-# S3 generic function for stock_db
 
-# creator of stock_db
+# stock_db class ----------------------------------------------------------
+
+
+#' S3 generic function for stock_db
+#
+#' Generic function of operating stock database
+#'
+#' A group generic function to deal with a stock_db objec
+#'
+#' @name stock_db_operations
+#' @examples
+#' stock_db <- stock_db(gta_db, "GTA_SQLData")
+#' open_stock_db(stock_db)
+#' close_stock_db(stock_db)
+NULL
+
+
+#' Class creator of stock_db class
+#'
+#' Generic class creator of stock_db class
+#'
+#' @param stock_db_class class name of specific class of stock database,
+#' e.g. gta_db
+#' @param ... addition params used by specific class of stock database(e.g. a dsn string
+#' "GTA_SQLData")
+#'
+#' @return a object of class of stock db
+#' @export
+#'
+#' @examples
+#' stock_db <- stock_db(gta_db, "GTA_SQLData")
+#'
 stock_db <- function(stock_db_class, ...) {
 
   # build class object
@@ -11,46 +41,107 @@ stock_db <- function(stock_db_class, ...) {
 
 }
 
-
-# Open stock database
+#' Open stock database
+#'
+#' Generic function to open a stock database
+#'
+#' @param stock_db a stock database object to operate
+#'
+#' @return TRUE if success, else FALSE
+#' @export
+#' @examples
+#' stock_db <- stock_db(gta_db, "GTA_SQLData")
+#' open_stock_db(stock_db)
+#' close_stock_db(stock_db)
 open_stock_db <- function(stock_db) {
   UseMethod("open_stock_db")
 }
 
-# Close the stock database
+#' Close the stock database
+#'
+#' Generic function to close a stock database
+#'
+#' @param stock_db a stock database object to operate
+#'
+#' @return TRUE if success, else FALSE
+#' @export
+#'
+#' @examples
+#' stock_db <- stock_db(gta_db, "GTA_SQLData")
+#' open_stock_db(stock_db)
+#' close_stock_db(stock_db)
 close_stock_db <- function(stock_db) {
   UseMethod("close_stock_db")
 }
 
-# Init param of stock db
+
+#' Init param of stock db
+#'
+#' Generic function to initiate params of a stock database
+#'
+#' @param stock_db a stock database object to operate
+#'
+#' @return TRUE if success, else FALSE
+#' @export
+#'
+#' @examples
+#' stock_db <- stock_db(gta_db, "GTA_SQLData")
+#' open_stock_db(stock_db)
+#' init_stock_db(stock_db)
 init_stock_db <- function(stock_db) {
   UseMethod("init_stock_db")
 }
 
-# transalte name to code in domain of stock db
-name2code <- function(stock_db) {
-  UseMethod("name2code")
-}
-
-# transalte code to name in domain of stock db
-code2name <- function(stock_db) {
-  UseMethod("code2name")
-}
-
-
-# List all datasets of stck_db
+#' List all tables of stcok_db
+#'
+#' Generic function to list all tables of stock_db
+#'
+#' @param stock_db  a stock database object to operate
+#'
+#' @return a vectors of characters of table names
+#' @export
+#'
+#' @examples
+#' stock_db <- stock_db(gta_db, "GTA_SQLData")
+#' open_stock_db(stock_db)
+#' init_stock_db(stock_db)
+#' list_stock_tables(stock_db)
 list_stock_tables <- function(stock_db) {
   UseMethod("list_stock_tables")
 }
 
 
-# get one dataset from stock_db
-get_table_dataset <- function(stock_db, table_name, quietly = FALSE) {
+#' Get one dataset from stock_db
+#'
+#' Generic function to get one dataset from stock_db
+#'
+#' @param stock_db    a stock database object to operate
+#' @param table_name  name of target table
+#'
+#' @return A data frame on success, or NULL
+#' @export
+#'
+#' @examples
+#' ds_trd_mnth.df <- get_table_dataset(stock_db, table_name = "TRD_Mnth_月个股回报率")
+get_table_dataset <- function(stock_db, table_name) {
   UseMethod("get_table_dataset")
 }
 
 
-# fetch many datasets from stock_db
+#' Fetch many datasets from stock_db
+#'
+#' Generic function to fetch many datasets from stock_db
+#'
+#' @param stock_db   a stock database object to operate
+#' @param table_list a character vector of table names
+#'
+#' @return A list of names of table fetched successfully
+#' @export
+#'
+#' @examples
+#' stock_cd_list <- c(600066,000550, 600031, 000157,000651, 000333)
+#' ds_stocks_mretnd.fts <- fetch_stock_dataset(ds_source.df = ds_trd_mnth.df, stock_cd_list = stock_cd_list, target_field = "mretnd", date_field = "trdmnt")
+
 fetch_table_dataset <- function(stock_db, table_list) {
   UseMethod("fetch_table_dataset")
 }
@@ -158,24 +249,58 @@ fetch_stock_dataset <- function(ds_source.df, stock_cd_list, ...) {
   return(ds_result)
 }
 
-# S3 generic function to translate code to name
+#' Translate code into name
+#'
+#' Generic function to translate code into name
+#'
+#' @param x    a object containg code/name infomation
+#' @param code a code or a vector of codes to be translated
+#' @param ...  other params to be provided to underlyling functions
+#'
+#' @return     a name or a vector of names
+#' @export
+#'
+#' @examples
 code2name <- function(x, code, ...) {
   UseMethod("code2name")
 }
 
-# S3 generic function to translate name to code
+
+#' Translate name into code
+#'
+#' Generic function to translate name into code
+#'
+#' @param x     a object containg code/name infomation
+#' @param name  a name or a vector of names to be translated
+#' @param ...   other params to be provided to underlyling functions
+#'
+#' @return      a code or a vector of codes
+#' @export
+#'
+#' @examples
 name2code <- function(x, name, ...) {
   UseMethod("name2code")
 }
 
-# stock_field class -------------------------------------------------------
+# stock_field_list class -------------------------------------------------------
 
-# S3 generic stock_field class creator
+#' Class creator of stock_field class
+#'
+#' Generic stock_field class creator
+#'
+#' @param stock_db a stock database object to provide stock_field info
+#'
+#' @return a object of stock_filed class
+#' @export
+#'
+#' @examples
 stock_field_list <- function(stock_db) {
   UseMethod("stock_field_list")
 }
 
-# translate field code to field name for table fields
+# Translate field code into field name for table fields
+#' @describeIn code2name Translate code into name in a object of stock_field_list  class
+#' @export
 code2name.stock_field_list <- function(x, code) {
 
   stopifnot(inherits(x, "stock_field_list") ,!is.null(code))
@@ -187,7 +312,9 @@ code2name.stock_field_list <- function(x, code) {
 
 }
 
-# translate field name to field code for table fields
+# Translate field name into field code for table fields
+#' @describeIn name2code Translate name into code in a object of stock_field_list  class
+#' @export
 name2code.stock_field_list <- function(x, name) {
 
   stopifnot(inherits(x, "stock_field_list") ,!is.null(name), is.character(name))
@@ -200,15 +327,26 @@ name2code.stock_field_list <- function(x, name) {
 }
 
 
-# stock_name_list ---------------------------------------------------------
+# stock_name_list class ---------------------------------------------------------
 
 
-# S3 generic stock_name_list class creator
+#' Class creator of stock_name_list class
+#'
+#' generic stock_name_list class creator
+#'
+#' @param stock_db a stock database object to provide stock_name info
+#'
+#' @return a object of stock_name class
+#' @export
+#'
+#' @examples
 stock_name_list <- function(stock_db) {
   UseMethod("stock_name_list")
 }
 
-# translate stock code to stock name for stock name list
+# Translate stock code into stock name for stock_name_list
+#' @describeIn code2name Translate code into name in a object of stock_name_list  class
+#' @export
 code2name.stock_name_list <- function(x, code) {
 
   stopifnot(inherits(x, "stock_name_list") ,!is.null(code))
@@ -220,7 +358,9 @@ code2name.stock_name_list <- function(x, code) {
 
 }
 
-# translate stock name to stock code for stock name list
+# Translate stock name into stock code for stock_name_list
+#' @describeIn name2code Translate name into code in a object of stock_name_list  class
+#' @export
 name2code.stock_name_list <- function(x, name) {
 
   stopifnot(inherits(x, "stock_name_list") ,!is.null(name), is.character(name))

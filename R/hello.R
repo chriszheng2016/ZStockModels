@@ -108,7 +108,7 @@ tabular <- function(df, ...) {
         contents, "\n}\n", sep = "")
 }
 
-cat(tabular(mtcars[1:5, 1:5]))
+# cat(tabular(mtcars[1:5, 1:5]))
 #> \tabular{rrrrr}{
 #> 21.0 \tab 6 \tab 160 \tab 110 \tab 3.90\cr
 #> 21.0 \tab 6 \tab 160 \tab 110 \tab 3.90\cr

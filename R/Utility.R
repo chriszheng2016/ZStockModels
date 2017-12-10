@@ -13,7 +13,7 @@
     setting_value <- profile_setting$VAR_VALUE[profile_setting$VAR_NAME == variable ]
     if (is.null(setting_value) || length(setting_value) == 0) {
       msg <- sprintf("No value of '%s' was found in %s", variable, profile )
-      stop(msg)
+      warning(msg)
     }
   }
 

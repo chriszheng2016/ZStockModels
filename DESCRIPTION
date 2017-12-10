@@ -17,6 +17,7 @@ Imports: fPortfolio,
     RODBC
 Suggests: Hmisc,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr

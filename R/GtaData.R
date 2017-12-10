@@ -14,7 +14,16 @@
 .GTA_XXXX <- "中文字符"  # not supported
 
 
-# creator of gta_db
+#' Class creator of gta_db
+#'
+#' Create a object for gta_db class
+#'
+#' @param dsn odbc dsn string
+#' @return an object of gta_db class
+#' @export
+#'
+#' @examples
+#' gta <- gta_db()
 gta_db <- function(dsn = "GTA_SQLData") {
 
   stopifnot(!is.null(dsn))
@@ -25,11 +34,13 @@ gta_db <- function(dsn = "GTA_SQLData") {
   class_env$connection <- NULL
 
   #create the class object
-  structure(class_env, class = "gta_db")
+  structure(class_env, class = c("gta_db", "stock_db"))
 
 }
 
 # Open the stock database
+#' @describeIn open_stock_db Open a database of gta_db class
+#' @export
 open_stock_db.gta_db <- function(stock_db) {
 
   stopifnot(inherits(stock_db, "gta_db"))
@@ -46,31 +57,77 @@ open_stock_db.gta_db <- function(stock_db) {
     success <- TRUE
   }
 
-  cat(msg, "\n")
+  message(msg)
+
   return(invisible(success))
 }
 
 # Init param of stock db
+#' @describeIn init_stock_db Init param of database of gta_db class
+#' @export
 init_stock_db.gta_db <- function(stock_db) {
 
   stopifnot(inherits(stock_db, "gta_db"))
 
-  # set up table name mapping for referece
-  gta_profile_name <- system.file(.GTA_RPROFILE_DIR, .GTA_PROFILE_FILE, package = .PACKAGE_NAME )
+  success <- TRUE
 
-  stock_db$table_fieldname_list <- .get_db_profile(gta_profile_name, .GTA_TABLE_FIELDNAME_LIST)
-  stock_db$table_trd_company    <- .get_db_profile(gta_profile_name, .GTA_TABLE_TRD_COMPANY)
+  # set up table name mapping for referece
+  gta_profile_name <- system.file(.GTA_RPROFILE_DIR,
+                                  .GTA_PROFILE_FILE, package = .PACKAGE_NAME )
+  if (gta_profile_name == "") {
+    msg = sprintf("No profileof % exisits in % for %",
+                  .GTA_PROFILE_FILE,
+                  .GTA_RPROFILE_DIR,
+                  .PACKAGE_NAME)
+    stop(msg)
+  }
+
+  stock_db$table_fieldname_list <- .get_db_profile(gta_profile_name,
+                                                   .GTA_TABLE_FIELDNAME_LIST)
+  if (is.null(stock_db$table_fieldname_list)) {
+    msg = sprintf("failed to load %s from %", .GTA_TABLE_FIELDNAME_LIST,
+                  gta_profile_name)
+    stop(msg)
+    success = FALSE
+  }
+
+
+  stock_db$table_trd_company <- .get_db_profile(gta_profile_name,
+                                                .GTA_TABLE_TRD_COMPANY)
+  if (is.null(stock_db$table_trd_company)) {
+    msg = sprintf("failed to load %s from %", .GTA_TABLE_TRD_COMPANY,
+                  gta_profile_name)
+    stop(msg)
+    success = FALSE
+  }
+
 
   # set up field_name list
-  stock_db$stock_field_list <- stock_field_list(stock_db)
+  if (success) {
+    stock_db$stock_field_list <- stock_field_list(stock_db)
+    if (is.null(stock_db$stock_field_list)) {
+      warning("failed to set up field_name_list")
+      success = FALSE
+    }
+  }
+
+
 
   # set up stock_name list
-  stock_db$stock_name_list <- stock_name_list(stock_db)
+  if (success) {
+    stock_db$stock_name_list <- stock_name_list(stock_db)
+    if (is.null(stock_db$stock_name_list)) {
+      warning("failed to set up stock_name_list")
+      success = FALSE
+    }
+  }
 
-
+  return(success)
 }
 
 # Close the stock database
+#' @describeIn close_stock_db Close a database of gta_db class
+#' @export
 close_stock_db.gta_db <- function(stock_db) {
 
   stopifnot(inherits(stock_db, "gta_db"))
@@ -94,14 +151,16 @@ close_stock_db.gta_db <- function(stock_db) {
 
     }
 
-    cat(msg, "\n")
+    message(msg)
   }
 
   return(invisible(success))
 
 }
 
-# List all datasets of stck_db
+# List all tables of stck_db
+#' @describeIn list_stock_tables List names of tables in database of gta_db class
+#' @export
 list_stock_tables.gta_db <- function(stock_db) {
 
   stopifnot(inherits(stock_db, "gta_db"))
@@ -116,7 +175,9 @@ list_stock_tables.gta_db <- function(stock_db) {
   return(db_tables)
 }
 
-# translate name to code for field or stock
+# Translate name into code for field or stock
+#' @describeIn name2code Translate name into code in a database of gta_db class
+#' @export
 name2code.gta_db <- function(stock_db, name, type=c("field", "stock")) {
 
     stopifnot(inherits(stock_db, "gta_db"), !missing(name))
@@ -131,7 +192,9 @@ name2code.gta_db <- function(stock_db, name, type=c("field", "stock")) {
 
 }
 
-# translate code to name for field or stock
+# Translate code into name for field or stock
+#' @describeIn code2name Translate code into name in a database of gta_db class
+#' @export
 code2name.gta_db <- function(stock_db, code, type=c("field", "stock")) {
 
   stopifnot(inherits(stock_db, "gta_db"), !missing(code))
@@ -147,7 +210,9 @@ code2name.gta_db <- function(stock_db, code, type=c("field", "stock")) {
 
 
 # get one dataset from stock_db
-get_table_dataset.gta_db <- function(stock_db, table_name, quietly = FALSE) {
+#' @describeIn get_table_dataset get one datasets from a database of gta_db class
+#' @export
+get_table_dataset.gta_db <- function(stock_db, table_name ) {
 
   # Validate params
   stopifnot(inherits(stock_db, "gta_db"))
@@ -172,14 +237,14 @@ get_table_dataset.gta_db <- function(stock_db, table_name, quietly = FALSE) {
     colnames(ds_result) <- tolower(colnames(ds_result))
   }
 
-  if (!quietly) {
-    cat(msg,"\n")
-  }
+  message(msg)
 
   return(invisible(ds_result))
 }
 
 # fetch many datasets from stock_db
+#' @describeIn fetch_table_dataset get many datasets from a database of gta_db class
+#' @export
 fetch_table_dataset.gta_db <- function(stock_db, table_list) {
 
   # validate params
@@ -226,7 +291,8 @@ fetch_table_dataset.gta_db <- function(stock_db, table_list) {
 # stock_field_list class of gta -------------------------------------------------------
 
 # stock_field class creator
-
+#' @describeIn stock_field_list create a stock_filed_list for a database of gta_db class
+#' @export
 stock_field_list.gta_db <- function(stock_db) {
 
   stopifnot(!is.null(stock_db), inherits(stock_db, "gta_db"))
@@ -250,6 +316,8 @@ stock_field_list.gta_db <- function(stock_db) {
 
 
 # stock_name_list class creator
+#' @describeIn stock_name_list create a stock_name_list for a database of gta_db class
+#' @export
 stock_name_list.gta_db <- function(stock_db) {
 
   stopifnot(!is.null(stock_db), inherits(stock_db, "gta_db"))

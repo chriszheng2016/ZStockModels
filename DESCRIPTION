@@ -14,7 +14,9 @@ LazyData: true
 Imports: fPortfolio,
     timeSeries,
     xts,
-    RODBC
+    RODBC,
+    data.table,
+    dplyr
 Suggests: Hmisc,
     knitr,
     rmarkdown,

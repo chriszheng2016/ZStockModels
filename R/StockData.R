@@ -111,7 +111,7 @@ list_stock_tables <- function(stock_db) {
 }
 
 
-#' Get one dataset from stock_db
+#' Get adataset from a table in stock_db
 #'
 #' Generic function to get one dataset from stock_db
 #'
@@ -125,6 +125,26 @@ list_stock_tables <- function(stock_db) {
 #' ds_trd_mnth.df <- get_table_dataset(stock_db, table_name = "TRD_Mnth_月个股回报率")
 get_table_dataset <- function(stock_db, table_name) {
   UseMethod("get_table_dataset")
+}
+
+#' Get a dataset of a list of stock_cd from a table in stock_db
+#'
+#' Generic function to get a dataset of a list of stock_cd from table in stock
+#'
+#' @param stock_db      a stock database object to operate
+#' @param table_name    name of target table
+#' @param stock_cd_list a list of stock cd, default value of NULL means
+#'     all stock data will be returned
+#'
+#' @return A data frame on success, or NULL
+#' @export
+#'
+#' @examples
+#' ds_trd_dalyr.df <- get_stock_dataset(stock_db,
+#'                             table_name = "TRD_Dalyr_日个股回报率",
+#'                             stock_cd_list = c("600066", "000550"))
+get_stock_dataset <- function(stock_db, table_name, stock_cd_list) {
+  UseMethod("get_stock_dataset")
 }
 
 
@@ -146,8 +166,23 @@ fetch_table_dataset <- function(stock_db, table_list) {
   UseMethod("fetch_table_dataset")
 }
 
+#' Fetch a timeseries of a list of stock_cd from stock_db
+#'
+#' @param stock_db      a stock database object to operate
+#' @param table_name    name of target table
+#' @param stock_cd_list a list of stock_cd
+#'
+#' @return a A data frame on success, or NULL
+#' @export
+#'
+#' @examples
+fetch_stock_dataset <- function(stock_db, table_name, stock_cd_list) {
+  UseMethod("fetch_stock_dataset")
+}
+
+
 # Get a timeseries of stock data for specified stock from table datasets
-get_stock_dataset <- function(ds_source.df,
+get_stock_field_dataset <- function(ds_source.df,
                               stock_cd,
                               target_field,
                               stkcd_field = "stkcd",
@@ -155,7 +190,7 @@ get_stock_dataset <- function(ds_source.df,
                               tseries_type = c("timeSeries", "xts"),
                               debug = FALSE) {
 
-  # Validate parama
+  # Validate param
   if (is.null(ds_source.df) || missing(stock_cd)
       || missing(target_field) || missing(date_field)) {
     stop("ds_source.df, stock_cd, target_field, date_field  mustn't be null")
@@ -199,10 +234,13 @@ get_stock_dataset <- function(ds_source.df,
   } else {
     # xts data series
     ds_name <- sprintf("ds_%s_%s.xts", stkcd_string, target_field)
-    result_ts <- xts::xts(ds_stock_data.df['target_field'],
+    result_ts <- xts::xts(ds_stock_data.df[target_field],
                           order.by = zoo::as.Date(zoo::as.yearmon(ds_stock_data.df[[date_field]])))
     colnames(result_ts) <- stkcd_string
   }
+
+  # Sort result
+  result_ts <- sort(result_ts)
 
   # Return the result timeseries of stock
   if (debug) {
@@ -219,7 +257,10 @@ get_stock_dataset <- function(ds_source.df,
 }
 
 # Get several timeseries of stocks data for multiple stocks from peroidic dataset
-fetch_stock_dataset <- function(ds_source.df, stock_cd_list, ...) {
+fetch_stock_field_dataset <- function(ds_source.df,
+                                      stock_cd_list,
+                                      replaceNA = c("keep", "zeros", "mean", "median"),
+                                      ...) {
 
 
   # Validate params
@@ -233,7 +274,7 @@ fetch_stock_dataset <- function(ds_source.df, stock_cd_list, ...) {
   for (the_stock_cd in stock_cd_list) {
 
     # get stock data for specified stock
-    ds_stock_data <- get_stock_dataset(ds_source.df = ds_source.df, stock_cd = the_stock_cd, ...)
+    ds_stock_data <- get_stock_field_dataset(ds_source.df = ds_source.df, stock_cd = the_stock_cd, ...)
 
     # Build the result dataset
     if (is.null(ds_result)) {
@@ -242,6 +283,19 @@ fetch_stock_dataset <- function(ds_source.df, stock_cd_list, ...) {
     } else {
       # Merge stock data into the result dataset
       ds_result <- merge(ds_result, ds_stock_data)
+    }
+
+  }
+
+  # remove the na as request
+  na_type = match.arg(replaceNA)
+  if (na_type != "keep") {
+    ds_nona_result <- timeSeries::substituteNA(ds_result, type = na_type )
+    if (xts::is.xts(ds_result)) {
+      ds_result <- xts::as.xts(ds_nona_result)
+    }
+    else{
+      ds_result <- ds_nona_result
     }
 
   }

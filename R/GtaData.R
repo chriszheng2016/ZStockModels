@@ -209,8 +209,8 @@ code2name.gta_db <- function(stock_db, code, type=c("field", "stock")) {
 }
 
 
-# get one dataset from stock_db
-#' @describeIn get_table_dataset get one datasets from a database of gta_db class
+# Get a dataset from a table in stock_db
+#' @describeIn get_table_dataset get a table dataset from a database of gta_db class
 #' @export
 get_table_dataset.gta_db <- function(stock_db, table_name ) {
 
@@ -225,7 +225,7 @@ get_table_dataset.gta_db <- function(stock_db, table_name ) {
     stop("Table name must be character string")
   }
 
-  # Fetech datasets from datatables
+  # Get table data  from database
   ds_result <- tryCatch(RODBC::sqlFetch(stock_db$connection, table_name,
                                         stringsAsFactors = FALSE),
                          error = function(e) e)
@@ -242,7 +242,68 @@ get_table_dataset.gta_db <- function(stock_db, table_name ) {
   return(invisible(ds_result))
 }
 
-# fetch many datasets from stock_db
+# Get a dataset of a list of stock_cd from table in stock
+#' @describeIn get_stock_dataset get a dataset of a list of stock_cd from table
+#' in a database of gta_db class
+#' @export
+get_stock_dataset.gta_db <- function(stock_db, table_name, stock_cd_list = NULL) {
+
+  # Validate param
+  stopifnot(inherits(stock_db, "gta_db"))
+
+  if (is.null(stock_db$connection)) {
+    stop("Stock db isn't connected, try to connect db again")
+  }
+
+  if (missing(table_name) || !is.character(table_name) ) {
+    stop("Table name must be character string")
+  }
+
+  # if (missing(stock_cd_list) || !is.character(stock_cd_list) ) {
+  #   stop("stock_cd_list must be character string")
+  # }
+
+  # Build sql command for data query
+  stock_cd_list_str <- NULL
+  if (!is.null(stock_cd_list)) {
+    for (stock_cd in stock_cd_list) {
+
+      if (is.null(stock_cd_list_str)) {
+        stock_cd_list_str = sprintf("'%06d'", stock_cd)
+      } else {
+        stock_cd_list_str = paste(stock_cd_list_str, sprintf("'%06d'", stock_cd),
+                                  sep = ",")
+      }
+    }
+  }
+
+  if (length(stock_cd_list_str) != 0 ) {
+    sql_cmd <- sprintf("select * from %s where Stkcd in (%s)",
+                       table_name, stock_cd_list_str)
+  } else {
+    sql_cmd <- sprintf("select * from %s", table_name)
+  }
+
+  # Select stock data from table
+  ds_result <- tryCatch(RODBC::sqlQuery(stock_db$connection, sql_cmd,
+                                        stringsAsFactors = FALSE),
+                        error = function(e) e)
+  if (inherits(ds_result, "error")) {
+    msg <- conditionMessage(ds_result)
+    ds_result <- NULL
+  } else {
+    msg <- sprintf("get stock data of(%s) from %s successfully", stock_cd_list_str,
+                   table_name)
+    colnames(ds_result) <- tolower(colnames(ds_result))
+  }
+
+  message(msg)
+
+  return(invisible(ds_result))
+
+}
+
+# Fetch many datasets from stock_db
 #' @describeIn fetch_table_dataset get many datasets from a database of gta_db class
 #' @export
 fetch_table_dataset.gta_db <- function(stock_db, table_list) {
@@ -287,6 +348,8 @@ fetch_table_dataset.gta_db <- function(stock_db, table_list) {
   return( result_table_list)
 
 }
+
+
 
 # stock_field_list class of gta -------------------------------------------------------
 

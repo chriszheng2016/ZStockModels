@@ -1,0 +1,231 @@
+---
+title: "Analysis of Stock Profit"
+editor_options:
+  chunk_output_type: inline
+date: '2017-12-25'
+output:
+  html_notebook:
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+  tufte::tufte_book: null
+  word_document:
+    toc: yes
+---
+
+研究各股票的利润情况
+
+
+```{r setup, include=FALSE  }
+   library(tidyverse)
+   library(lubridate)
+   library(stringr)
+   library(ZStockModels)
+   
+   # Set global options for knitr 
+   knitr::opts_chunk$set(
+    comment = "#>",
+    warning = FALSE,
+    message = FALSE,
+    collapse = TRUE
+    )
+
+```
+
+# Data Preparation(数据准备)
+
+## Load GTA Stock Database(加载GTA股票数据库)
+```{r connect_db}
+# Open gta stock databse
+stock_db <- stock_db(gta_db, "GTA_SQLData")
+open_stock_db(stock_db)
+
+# Initate the stock database
+invisible(init_stock_db(stock_db))
+stock_name_list  <- stock_name_list(stock_db)
+stock_field_list <- stock_field_list(stock_db)
+
+# Get names of all stock table from database   
+ db_tables <- list_stock_tables(stock_db)
+ knitr::kable(
+  x = db_tables,
+  caption = "Tables in GTA Stock Database",
+  align = "l"
+ )
+ 
+```
+
+
+## Set Portfilo of Stocks(设置股票组合)
+
+**组合包括股票明细：**
+
+```{r set_portfolio_stock}
+# Set group of focus stock as portfolio
+stock_stkcds_list <- c(600066,000550, 600031, 000157,000651, 000333)
+stock_names_list <- code2name(stock_name_list, stock_stkcds_list)
+portfolio_stocks <- tibble::tibble(code = stock_stkcds_list, name = stock_names_list)
+
+# Get company info 
+trd_company.df <- get_table_dataset(stock_db, table_name = "TRD_Co_公司基本情况")
+trd_company.tib <- tibble::as.tibble(trd_company.df)
+
+portfolio_stocks <- portfolio_stocks %>%
+    dplyr::left_join(trd_company.tib, by = c("code" = "stkcd")) %>%
+    dplyr::select(stkcd = code, stkname = name, indname = nindnme)
+
+portfolio_stocks
+
+```
+
+## Load Inicators of Porfolio(加载组合指标数据)
+
+
+**1. 加载组合相关数据如下：**
+```{r get_portfolio_data }
+# Load profit indicators of all stocks
+allstock_profit.df <- get_table_dataset(stock_db, table_name = "FR_T5_盈利能力")
+allstock_profit <- tibble::as.tibble(allstock_profit.df)
+
+allstock_data <- allstock_profit %>%
+    dplyr::left_join(trd_company.tib, by  = "stkcd") %>%
+    dplyr::select(accper, typrep, stkcd, stkname = stknme, indcd = indcd.x, indname = nnindnme, starts_with("f0"))
+
+# get data for portfolio
+portfolio_data <- allstock_data %>%
+      dplyr::filter( stkcd %in% stock_stkcds_list)
+
+
+(portfolio_data)
+```
+
+
+**2. 加载组合数据的相关字段信息如下：**
+```{r get_portfolio_field}
+# Get all fields of portfolio 
+stock_field_code_list <- colnames(portfolio_data)
+stock_field_code_list <- stringr::str_subset(stock_field_code_list, "^f")
+stock_field_name_list <- code2name(stock_field_list, stock_field_code_list)
+portfolio_fields <- tibble::tibble(code = stock_field_code_list, name = stock_field_name_list)
+portfolio_fields
+```
+## Set Focus Indicator of Portfolio（设置关注指标）
+
+设置需要研究的指标
+```{r set_focus_indicator}
+#Set focus indicator 
+focus_field_code_list <- c("f050501b","f050502b","f050503b","f050504c")
+the_indicator <- focus_field_code_list[4]
+
+portfolio_indicators <- portfolio_data %>%
+ dplyr::mutate(reptype = ifelse(lubridate::month(accper) == 12, "annual","quarter")) %>%
+ dplyr::filter(typrep == 'A') %>%
+ dplyr::select(accper:reptype, focus_field_code_list) 
+
+
+ # replace all NAs with  zero
+ # portfolio_annual_indicator[is.na(portfolio_annual_indicator)] <- 0
+ # portfolio_indicator[is.na(portfolio_indicator)] <- 0
+ # portfolio_annual_indicator %>%
+ #   `[<-`(is.na(.), value = 0)
+
+
+```
+
+
+
+# Data Exploration(数据探索)
+
+## Industry Study (各行业相关指标研究)
+
+各行业各指标均值如下：
+```{r industry_indicators}
+the_indicator <- c("f050504c")
+
+industry_indicator_summary <- allstock_data %>%
+    group_by(indname) %>%
+    summarise_at(the_indicator, .funs = funs(mean, median, sd, max, min)) %>%
+    arrange(desc(median), desc(mean))
+
+industry_indicator_summary %>%
+  ggplot(aes(x = reorder(indname, mean, FUN = "mean"), y = mean)) +
+    geom_col() +
+    coord_flip()
+
+industry_indicator_summary
+
+
+
+
+```
+
+## Portfoilo Study(投资组合相关指标研究)
+
+**1.各股历名数据基本统计情况**
+```{r}
+
+the_indicator <- c("f050504c")
+
+
+# plot distribution of each stock
+portfolio_indicators %>%
+  ggplot(aes(x = stkname, y = get(the_indicator))) +
+     geom_boxplot() +
+     coord_flip()
+
+# summary distribution of each stock
+portfolio_indicators_summary <- portfolio_indicators %>%
+  group_by(stkname) %>%
+  summarise(
+            mean = mean(get(the_indicator), na.rm = TRUE),
+            std  = sqrt(var(get(the_indicator), na.rm = TRUE)),
+            max = max(get(the_indicator), na.rm = TRUE),
+            Q3 = quantile(get(the_indicator),probs = c(0.75),na.rm = TRUE),
+            median = median(get(the_indicator), na.rm = TRUE),
+            Q1 = quantile(get(the_indicator),probs = c(0.25),na.rm = TRUE),
+            min = min(get(the_indicator), na.rm = TRUE)
+            )
+
+portfolio_indicators %>%
+   ggplot(aes(x = get(the_indicator))) +
+      geom_histogram(binwidth = 0.01) +
+      facet_wrap(~stkname)
+
+# portfolio_indicators_summary
+
+ knitr::kable(
+  x = portfolio_indicators_summary,
+  caption = "Portfolio Indicator Summary",
+  align = "l"
+ )
+
+```
+
+
+
+
+**2.各股历名数据分布**
+
+
+```{r explore_history_trends}
+
+# plot series of annual data
+portfolio_indicators %>%
+    filter(reptype == "annual") %>%
+    ggplot(aes(x = accper, y = get(the_indicator))) +
+       geom_col() + 
+       facet_wrap(~stkname) +
+       labs(title = "Annual Trends")
+
+
+# plot series of quarter data
+portfolio_indicators %>%
+    ggplot(aes(x = accper, y = get(the_indicator))) +
+       geom_col() + 
+       facet_wrap(~stkname) +
+        labs(title = "Quarterly Trends")
+
+
+```
+

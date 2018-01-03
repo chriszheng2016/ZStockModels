@@ -72,23 +72,23 @@ trd_company.tib <- tibble::as.tibble(trd_company.df)
 
 # all stocks in the investment universe
 universe_stocks <- trd_company.tib %>%
-    select(stkcd, stkname= stknme, indcd = nindcd, indname = nindnme) %>%
+    select(stkcd, stkname= stknme, indcd = nnindcd, indname = nnindnme) %>%
     arrange(indcd, stkcd)
 
 
 # all industries in investment universe
-universe_industry <- universe_stocks %>%
+universe_industries <- universe_stocks %>%
   group_by(indcd, indname) %>%
   summarise(stknum = n()) %>%
   arrange(indcd, desc(stknum))
 
 # Output the results
-universe_industry
+universe_industries
 universe_stocks
 
 ```
 
-**共`r nrow(universe_industry)`个行业, `r nrow(universe_stocks)`只股票**
+**共`r nrow(universe_industries)`个行业, `r nrow(universe_stocks)`只股票**
 
 ## Set Params of Study(设置研究参数)
 
@@ -191,34 +191,38 @@ industry_indicator_peroid<- universe_indicators %>%
     mutate(periodtype = ifelse(lubridate::month(accper) == 12, 
                                 "annual","quarter")) %>%
     select(indname, accper, periodtype, !!the_indicator:=median, everything()) %>%
-    arrange(indname, accper)
+    arrange(indname, accper) %>%
+    ungroup()
 
 # Indicator summary of each industry
 industry_indicator_summary <- industry_indicator_peroid %>%
     group_by(indname) %>%
     summarise_at(the_indicator, .funs = funs(mean, median, sd, max, min)) %>%
     filter(!is.na(indname)) %>%
-    arrange(desc(median))
+    arrange(desc(mean))
 
 # Output the results
 industry_indicator_summary
 
+
 # top and last industries
+sort_var <- "mean"
 top_industries <- industry_indicator_summary %>%
-     top_n(top_last_n_industies, median) %>%
+     top_n(top_last_n_industies, get(sort_var)) %>%
      select(indname) 
 top_industries <- top_industries$indname
 
 last_industries <- industry_indicator_summary %>%
-     top_n(-top_last_n_industies, median) %>%
+     top_n(-top_last_n_industies, get(sort_var)) %>%
      select(indname)
 last_industries <- last_industries$indname
+
 
 
 # Top 10 industries of Indicator
 industry_indicator_summary %>%
   filter(indname %in% top_industries) %>%
-  ggplot(aes(x = reorder(indname, median ), y = median)) +
+  ggplot(aes(x = reorder(indname, get(sort_var) ), y = get(sort_var))) +
     geom_col() +
     labs(
       title = str_c("Top Industries of Indicator"),
@@ -226,22 +230,21 @@ industry_indicator_summary %>%
       x = "Industry",
       y = "Median of Indicator"
     ) +
-    geom_label(aes(label = format(median, digits = 2, nsmall = 2)), hjust = TRUE) +
+    geom_label(aes(label = format(get(sort_var), digits = 2, nsmall = 2)), hjust = TRUE) +
     coord_flip()
 
 # last 10 industries of Indicator
 industry_indicator_summary %>%
   filter(indname %in% last_industries) %>%
-  # arrange(desc(mean)) %>%
-  ggplot(aes(x = reorder(indname, desc(median)), y = median)) +
+  ggplot(aes(x = reorder(indname, get(sort_var)), y = get(sort_var))) +
     geom_col() +
     labs(
         title = str_c("Last Industries of Indicator"),
         subtitle = str_c("(", the_indicator, "/", the_indicator_name, ")"),
         x = "Industry",
-        y = "Mean of Indicator"
+        y = "Median of Indicator"
       ) +
-    geom_label(aes(label = format(median, digits = 2, nsmall = 2)), hjust = FALSE) +
+    geom_label(aes(label = format(get(sort_var), digits = 2, nsmall = 2)), hjust = FALSE) +
     coord_flip()
 
 # Plot histogram of distiubtion of top industry
@@ -453,4 +456,12 @@ portfolio_indicators %>%
 
 
 ```
+
+```{r clsoe_db}
+
+# Close gta stock databse
+close_stock_db(stock_db)
+
+```
+
 

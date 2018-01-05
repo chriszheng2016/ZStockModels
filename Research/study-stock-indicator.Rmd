@@ -108,7 +108,7 @@ focus_fields_code <- c("f053301c", "f050504c", "f052401c")
 focus_fields_name <- code2name(stock_field_list,focus_fields_code)
 focus_fields.tib  <- tibble(code = focus_fields_code, name = focus_fields_name)
 
-the_indicator <- focus_fields_code[1]
+the_indicator <- focus_fields_code[2]
 the_indicator_name <- code2name(stock_field_list,the_indicator)
 
 # Set top/last n industries for show

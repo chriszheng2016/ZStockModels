@@ -159,25 +159,10 @@ get_stock_dataset <- function(stock_db, table_name, stock_cd_list) {
 #' @export
 #'
 #' @examples
-#' stock_cd_list <- c(600066,000550, 600031, 000157,000651, 000333)
-#' ds_stocks_mretnd.fts <- fetch_stock_dataset(ds_source.df = ds_trd_mnth.df, stock_cd_list = stock_cd_list, target_field = "mretnd", date_field = "trdmnt")
+#'
 
 fetch_table_dataset <- function(stock_db, table_list) {
   UseMethod("fetch_table_dataset")
-}
-
-#' Fetch a timeseries of a list of stock_cd from stock_db
-#'
-#' @param stock_db      a stock database object to operate
-#' @param table_name    name of target table
-#' @param stock_cd_list a list of stock_cd
-#'
-#' @return a A data frame on success, or NULL
-#' @export
-#'
-#' @examples
-fetch_stock_dataset <- function(stock_db, table_name, stock_cd_list) {
-  UseMethod("fetch_stock_dataset")
 }
 
 

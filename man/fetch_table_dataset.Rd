@@ -26,6 +26,5 @@ Generic function to fetch many datasets from stock_db
 }}
 
 \examples{
-stock_cd_list <- c(600066,000550, 600031, 000157,000651, 000333)
-ds_stocks_mretnd.fts <- fetch_stock_dataset(ds_source.df = ds_trd_mnth.df, stock_cd_list = stock_cd_list, target_field = "mretnd", date_field = "trdmnt")
+
 }

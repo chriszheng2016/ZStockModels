@@ -7,7 +7,7 @@
   stopifnot(!is.null(variable), is.character(variable))
 
   setting_value <- NULL
-  profile_setting <- read.csv(profile, stringsAsFactors = FALSE)
+  profile_setting <- read.csv(profile, stringsAsFactors = FALSE, encoding = "UTF-8")
   if (!is.null(profile_setting)) {
     #get value for the vairable
     setting_value <- profile_setting$VAR_VALUE[profile_setting$VAR_NAME == variable ]

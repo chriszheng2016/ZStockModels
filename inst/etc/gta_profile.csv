@@ -1,3 +1,11 @@
 VAR_NAME,VAR_VALUE
 gta_fieldname_list,gta_fieldname_list
-TRD_Co,TRD_Co_公司基本情况
+TRD_Co,TRD_Co_鍏徃鍩烘湰鎯呭喌
+TRD_DALYR,TRD_Dalyr_鏃ヤ釜鑲″洖鎶ョ巼
+TRD_WEEK,TRD_Week_鍛ㄤ釜鑲″洖鎶ョ巼
+TRD_MNTH,TRD_Mnth_鏈堜釜鑲″洖鎶ョ巼
+TRD_YEAR,TRD_Year_骞翠釜鑲″洖鎶ョ巼
+TRD_CNDALYM,TRD_Cndalym_缁煎悎甯傚満鏃ュ害鍥炴姤
+TRD_WEEKCM,TRD_Weekcm_缁煎悎甯傚満鍛ㄥ害鍥炴姤
+TRD_CNMONT,TRD_Cnmont_缁煎悎甯傚満鏈堝害鍥炴姤
+TRD_YEARCM,TRD_Yearcm_缁煎悎甯傚満骞村害鍥炴姤
